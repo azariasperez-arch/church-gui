@@ -2,16 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import bibleJson from "@church-screen/core/bible/rvr1960.json";
 import {
-  bibleToPresentation,
-  getVerses,
-  searchBible,
-  searchSongs,
-  setBible,
   songToPresentation,
+  searchSongs,
   t,
-  type BibleData,
   type BibleSearchHit,
   type Locale,
   type PresentationItem,
@@ -19,8 +13,6 @@ import {
   type Song,
 } from "@church-screen/core";
 import "../app/presenter.css";
-
-setBible(bibleJson as BibleData);
 
 type LibraryTab = "bible" | "songs";
 
@@ -31,8 +23,11 @@ export function PresenterClient({ initialSongs }: { initialSongs: Song[] }) {
   const [songs, setSongs] = useState<Song[]>(initialSongs);
   const [selectedSongId, setSelectedSongId] = useState<string | null>(null);
   const [selectedHit, setSelectedHit] = useState<BibleSearchHit | null>(null);
+  const [bibleHits, setBibleHits] = useState<BibleSearchHit[]>([]);
+  const [bibleLoading, setBibleLoading] = useState(false);
   const [service, setService] = useState<ServicePlaylistItem[]>([]);
   const [activeServiceId, setActiveServiceId] = useState<string | null>(null);
+  const [activeItem, setActiveItem] = useState<PresentationItem | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [presenting, setPresenting] = useState(false);
 
@@ -45,9 +40,23 @@ export function PresenterClient({ initialSongs }: { initialSongs: Song[] }) {
       .catch(() => undefined);
   }, []);
 
-  const bibleHits = useMemo(() => {
-    if (tab !== "bible") return [];
-    return searchBible(bibleJson as BibleData, query, { limit: 50 });
+  // Debounced Bible search via API (keeps client bundle small)
+  useEffect(() => {
+    if (tab !== "bible") return;
+    const q = query.trim();
+    if (!q) {
+      setBibleHits([]);
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      setBibleLoading(true);
+      void fetch(`/api/bible/search?q=${encodeURIComponent(q)}&limit=50`)
+        .then((r) => r.json())
+        .then((data: { hits: BibleSearchHit[] }) => setBibleHits(data.hits || []))
+        .catch(() => setBibleHits([]))
+        .finally(() => setBibleLoading(false));
+    }, 220);
+    return () => window.clearTimeout(handle);
   }, [tab, query]);
 
   const songHits = useMemo(() => {
@@ -55,17 +64,32 @@ export function PresenterClient({ initialSongs }: { initialSongs: Song[] }) {
     return searchSongs(songs, query, 50);
   }, [tab, query, songs]);
 
-  const activeItem: PresentationItem | null = useMemo(() => {
+  // Resolve active presentation
+  useEffect(() => {
     const fromService = service.find((s) => s.id === activeServiceId)?.item;
-    if (fromService) return fromService;
-    if (tab === "bible" && selectedHit) {
-      return bibleToPresentation(bibleJson as BibleData, selectedHit.citation);
+    if (fromService) {
+      setActiveItem(fromService);
+      return;
     }
     if (tab === "songs" && selectedSongId) {
       const song = songs.find((s) => s.id === selectedSongId);
-      if (song) return songToPresentation(song);
+      setActiveItem(song ? songToPresentation(song) : null);
+      return;
     }
-    return null;
+    if (tab === "bible" && selectedHit) {
+      void fetch("/api/bible/passage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ citation: selectedHit.citation }),
+      })
+        .then((r) => r.json())
+        .then((data: { presentation?: PresentationItem }) => {
+          setActiveItem(data.presentation ?? null);
+        })
+        .catch(() => setActiveItem(null));
+      return;
+    }
+    setActiveItem(null);
   }, [service, activeServiceId, tab, selectedHit, selectedSongId, songs]);
 
   const currentSlide = activeItem?.slides[slideIndex] ?? null;
@@ -126,7 +150,7 @@ export function PresenterClient({ initialSongs }: { initialSongs: Song[] }) {
     try {
       await document.documentElement.requestFullscreen();
     } catch {
-      // Fullscreen may be blocked; overlay still works.
+      // overlay still works without fullscreen permission
     }
   }
 
@@ -228,7 +252,11 @@ export function PresenterClient({ initialSongs }: { initialSongs: Song[] }) {
           </div>
           <div className="p-list">
             {tab === "bible" &&
-              (bibleHits.length ? (
+              (bibleLoading ? (
+                <div className="p-muted" style={{ padding: "0.75rem" }}>
+                  …
+                </div>
+              ) : bibleHits.length ? (
                 bibleHits.map((hit, idx) => {
                   const label = `${hit.citation.bookName} ${hit.citation.chapter}:${hit.citation.verseStart}${
                     hit.citation.verseEnd !== hit.citation.verseStart
@@ -251,9 +279,7 @@ export function PresenterClient({ initialSongs }: { initialSongs: Song[] }) {
                     >
                       <div>{label}</div>
                       <div className="p-meta">
-                        {hit.kind === "citation"
-                          ? "RVR1960"
-                          : getVerses(bibleJson as BibleData, hit.citation)[0]?.t.slice(0, 90)}
+                        {hit.kind === "citation" ? "RVR1960" : hit.preview.slice(0, 100)}
                       </div>
                     </button>
                   );
