@@ -1,9 +1,9 @@
 import { listSongs } from "@/lib/songStore";
-import { LibraryClient } from "@/components/LibraryClient";
+import { PresenterClient } from "@/components/PresenterClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const songs = await listSongs();
-  return <LibraryClient initialSongs={songs} />;
+  return <PresenterClient initialSongs={songs} />;
 }

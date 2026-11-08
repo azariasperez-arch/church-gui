@@ -7,10 +7,12 @@ GitHub: [azariasperez-arch/church-gui](https://github.com/azariasperez-arch/chur
 ## What’s included (Core MVP)
 
 - **Desktop (Electron)**: operator console + fullscreen stage/projector window
+- **Web presenter** (`/`): same ProPresenter-style operator in the browser (Bible + songs + service + fullscreen present)
+- **Web library** (`/library`): shared song CRUD for the team
 - **Bible (RVR1960)**: full Spanish text, citation + keyword search
-- **Songs**: local library + upload/edit; blank lines / `[Coro]` headers → intelligent slides
+- **Songs**: local/web library + upload/edit; blank lines / `[Coro]` headers → intelligent slides
 - **Service playlist**: build a run-of-show; Space / ← → navigate slides
-- **Web app**: shared song CRUD + `/api/songs` + `/api/sync` for desktop sync
+- **APIs**: `/api/songs` + `/api/sync` for desktop sync (CORS enabled)
 - **i18n**: Spanish-first, English toggle
 
 ## Repository layout
@@ -42,8 +44,10 @@ Bootstrap install is defined in [`.cursor/environment.json`](.cursor/environment
 pnpm install
 pnpm build:core
 
-# Web (shared library) — http://localhost:3177
+# Web presenter + library — http://localhost:3177
 pnpm dev:web
+# Presenter:  http://localhost:3177/
+# Library:    http://localhost:3177/library
 
 # Desktop operator — separate terminal
 pnpm dev:desktop
@@ -57,9 +61,9 @@ pnpm dev:desktop
 
 ### Present mode
 
-- Click **Presentar** to open the stage window (uses a second display when available).
+- **Desktop:** Click **Presentar** to open the stage window (uses a second display when available). `Cmd+Shift+P` toggles the stage window.
+- **Web:** Click **Presentar** for fullscreen overlay (projector/browser).
 - **Space** / **→** next slide, **←** previous, **Esc** stop.
-- Shortcut: `Cmd+Shift+P` toggles the stage window.
 
 ## Lyrics format
 

@@ -4,9 +4,19 @@ import type { SongUpsertInput } from "@church-screen/core";
 
 export const runtime = "nodejs";
 
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: cors });
+}
+
 export async function GET() {
   const songs = await listSongs();
-  return NextResponse.json({ songs });
+  return NextResponse.json({ songs }, { headers: cors });
 }
 
 export async function POST(request: Request) {
@@ -18,15 +28,15 @@ export async function POST(request: Request) {
     );
   }
   const song = await upsertSong(body);
-  return NextResponse.json({ song }, { status: 201 });
+  return NextResponse.json({ song }, { status: 201, headers: cors });
 }
 
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) {
-    return NextResponse.json({ error: "id required" }, { status: 400 });
+    return NextResponse.json({ error: "id required" }, { status: 400, headers: cors });
   }
   const ok = await deleteSong(id);
-  return NextResponse.json({ ok }, { status: ok ? 200 : 404 });
+  return NextResponse.json({ ok }, { status: ok ? 200 : 404, headers: cors });
 }
