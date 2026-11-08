@@ -1,0 +1,11 @@
+{
+  "name": "church-gui",
+  "install": "corepack enable && pnpm install && pnpm build:core",
+  "start": "pnpm dev:web",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "pnpm dev:web"
+    }
+  ]
+}

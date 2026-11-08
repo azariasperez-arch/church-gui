@@ -1,0 +1,41 @@
+{
+  "name": "@church-screen/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "macOS Electron operator + stage display for Church Screen",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "electron .",
+    "pack:mac": "pnpm build && electron-builder --mac dir"
+  },
+  "dependencies": {
+    "@church-screen/core": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.0.2",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.11",
+    "vite-plugin-electron": "^0.28.8",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  },
+  "build": {
+    "appId": "org.churchscreen.app",
+    "productName": "Church Screen",
+    "directories": { "output": "release" },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": ["dir"]
+    },
+    "files": ["dist/**/*", "dist-electron/**/*", "package.json"]
+  }
+}
