@@ -1,0 +1,21 @@
+{
+  "name": "church-gui",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ProPresenter-style church lyrics & Bible projector app (RVR1960) — macOS desktop + shared web library",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build:core": "pnpm --filter @church-screen/core build",
+    "build:bible": "pnpm --filter @church-screen/core build:bible",
+    "dev:desktop": "pnpm --filter @church-screen/desktop dev",
+    "dev:web": "pnpm --filter @church-screen/web dev",
+    "build": "pnpm -r build",
+    "build:desktop": "pnpm --filter @church-screen/desktop build",
+    "build:web": "pnpm --filter @church-screen/web build",
+    "test": "pnpm --filter @church-screen/core test",
+    "publish:github": "bash ./scripts/publish-to-github.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
